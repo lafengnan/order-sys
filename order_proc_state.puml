@@ -1,0 +1,19 @@
+@startuml
+scale 350 width
+state "Scheduling" as sch
+state "Pre-Processing" as prep
+state "Processing" as proc
+state "Post-Processing" as post
+state "Completed" as completed
+
+[*] --> sch
+sch --> prep: 5s success
+sch --> sch: 5s failed
+prep --> proc: 5s success
+prep --> prep: 5s failed
+proc --> post: 5s success
+proc --> proc: 5s failed
+post --> completed: 5s success
+post --> post: 5s failed
+
+@enduml

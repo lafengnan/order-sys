@@ -1,0 +1,42 @@
+group 'com.ebay.chris'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/log4j/log4j
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    // https://mvnrepository.com/artifact/redis.clients/jedis
+    compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
+    // https://mvnrepository.com/artifact/com.cedarsoftware/json-io
+    compile group: 'com.cedarsoftware', name: 'json-io', version: '4.10.0'
+    // https://mvnrepository.com/artifact/args4j/args4j
+    compile group: 'args4j', name: 'args4j', version: '2.33'
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+jar {
+    String someString = ''
+    configurations.runtime.each {someString = someString + " lib\\" + it.name}
+    manifest {
+        attributes 'Main-Class': 'com.ebay.chris.Main'
+        attributes 'Class-Path': someString
+    }
+}
+
+task clearPj(type:Delete){
+    delete 'build','target'
+}
+
+task copyJar(type:Copy){
+    from configurations.runtime
+    into ('build/libs/lib')
+}
+
