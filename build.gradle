@@ -18,6 +18,10 @@ dependencies {
     compile group: 'com.cedarsoftware', name: 'json-io', version: '4.10.0'
     // https://mvnrepository.com/artifact/args4j/args4j
     compile group: 'args4j', name: 'args4j', version: '2.33'
+    // https://mvnrepository.com/artifact/org.projectlombok/lombok
+    compile group: 'org.projectlombok', name: 'lombok', version: '1.16.18'
+    // https://mvnrepository.com/artifact/io.netty/netty-all
+    compile group: 'io.netty', name: 'netty-all', version: '4.1.15.Final'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }

@@ -3,6 +3,7 @@ package com.ebay.chris.common;
 import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
 import com.ebay.chris.model.Order;
+import lombok.Data;
 import org.apache.log4j.Logger;
 import redis.clients.jedis.Jedis;
 
@@ -22,7 +23,7 @@ import java.util.Optional;
  *
  */
 public class Protocol {
-    private static String version = "1.0.0";
+    private static final String version = "0.0.1";
     private static final Jedis jedis = Util.jedis();
     private static Logger logger = Logger.getLogger(Protocol.class);
 
@@ -44,10 +45,10 @@ public class Protocol {
 
                 // 2. query order id
                 for (int i = 0; orderIds[0].isEmpty() && i < timeOut; ) {
-                    List<String> infoList = jedis.lrange(Storage.stageQueue, 0, -1);
+                    List<String> infoList = jedis.lrange(Storage.schedulingQueue, 0, -1);
                     infoList.forEach(s -> {
                         Order updatedOrder = (Order)JsonReader.jsonToJava(s);
-                        if (updatedOrder.getqId().equals(order.getqId())) {
+                        if (updatedOrder.getQId().equals(order.getQId())) {
                             orderIds[0] = updatedOrder.getId();
                         }
                     });
@@ -59,7 +60,7 @@ public class Protocol {
                 return orderIds[0];
             case QUERY:
                 String orderId = (String)message.body;
-                List<String> orderStrings = jedis.lrange(Storage.stageQueue, 0, -1);
+                List<String> orderStrings = jedis.lrange(Storage.schedulingQueue, 0, -1);
                 List<Order> orders = new LinkedList<>();
                 orderStrings.forEach(s -> orders.add((Order)JsonReader.jsonToJava(s)));
                 Optional<Order> opt = orders.stream().filter(o -> o.getId().equals(orderId)).findFirst();
@@ -85,7 +86,7 @@ public class Protocol {
         logger.debug("validation message format...");
         boolean flag = true;
         switch (version) {
-            case "1.0.0":
+            case "0.0.1":
                 if (message.state.equals(MState.SEND_SUCCESS)) {
                     flag = false;
                     logger.debug("resend a sent message is forbidden!");
@@ -111,6 +112,7 @@ public class Protocol {
      *    - GOOD
      *    - BAD
      */
+    @Data
     public static class Message <T> {
         // request id prefixed with 0
         // response id prefixed with 1
@@ -124,7 +126,6 @@ public class Protocol {
         private T body;
 
         public Message(String sender, MType type, T body) {
-            // TODO: unique id
             String msgId = IdGenerator.messageId();
             this.id = (type.code & (1 << 4)) == 0?"#" + msgId:"*" + msgId;
             this.type = type;
@@ -133,70 +134,6 @@ public class Protocol {
             this.createdAt = Instant.now().getEpochSecond();
             this.sendAt = 0L;
             this.ackAt = 0L;
-            this.body = body;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public MType getType() {
-            return type;
-        }
-
-        public void setType(MType type) {
-            this.type = type;
-        }
-
-        public String getSender() {
-            return sender;
-        }
-
-        public void setSender(String sender) {
-            this.sender = sender;
-        }
-
-        public MState getState() {
-            return state;
-        }
-
-        public void setState(MState state) {
-            this.state = state;
-        }
-
-        public long getCreatedAt() {
-            return createdAt;
-        }
-
-        public void setCreatedAt(long createdAt) {
-            this.createdAt = createdAt;
-        }
-
-        public long getSendAt() {
-            return sendAt;
-        }
-
-        public void setSendAt(long sendAt) {
-            this.sendAt = sendAt;
-        }
-
-        public long getAckAt() {
-            return ackAt;
-        }
-
-        public void setAckAt(long ackAt) {
-            this.ackAt = ackAt;
-        }
-
-        public T getBody() {
-            return body;
-        }
-
-        public void setBody(T body) {
             this.body = body;
         }
     }
@@ -217,7 +154,8 @@ public class Protocol {
         CHECK0(0x00), // health check in servers
         CHECK1(0x10), // client check server health
         QUERY(0x11), // query orders, request only
-        SUBMIT(0x12); // submit orders, request only
+        SUBMIT(0x12), // submit orders, request only
+        UNKNOWN(0xff);
         private int code;
         private MType(int code) {
             this.code = code;

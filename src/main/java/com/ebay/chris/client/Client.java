@@ -1,9 +1,12 @@
 package com.ebay.chris.client;
 
+import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
+import com.ebay.chris.Runner;
 import com.ebay.chris.common.IdGenerator;
-import com.ebay.chris.common.Protocol;
 import com.ebay.chris.common.Protocol.*;
+import com.ebay.chris.common.Storage;
+import com.ebay.chris.common.Util;
 import com.ebay.chris.model.Order;
 import org.apache.log4j.Logger;
 
@@ -17,7 +20,7 @@ import java.util.*;
  * by using message queue based on redis. That means client and server will
  * not talk with each other directly. They are decoupled by MQ.
  */
-public class Client {
+public class Client extends Runner {
     private static Logger logger = Logger.getLogger(Client.class);
     private static final Map<String, Object> JSONWR_WARGS = new HashMap<>();
 
@@ -27,11 +30,9 @@ public class Client {
     }
 
     // clientId identifies client uniquely
-    private String id;
+    private String id = IdGenerator.clientId();
 
     public Client() {
-        logger.debug("Running in client mode");
-        this.id = IdGenerator.clientId();
     }
 
     public void run() {
@@ -49,19 +50,19 @@ public class Client {
                     case "submit":
                         String userId = in.next();
                         int amount = in.nextInt();
-                        System.out.println(submit(create(userId, amount)));
+                        System.out.println(submit(createOrder(userId, amount)));
                         break;
                     case "check":
                         break;
                     default:
+                        logger.warn("Unknown command: " + cmd);
                         break;
                 }
             }
         }
     }
 
-    public Order create(String userId, int amount) {
-        logger.debug("create order for user: " + userId);
+    private Order createOrder(String userId, int amount) {
         Order order = new Order();
         order.setUserId(userId);
         order.setAmount(amount);
@@ -75,20 +76,20 @@ public class Client {
      * @param order new created order
      * @return orderId to client
      */
-    public String submit(Order order) {
+    private String submit(Order order) {
         logger.debug("Submit order to service...");
         Message<Order> message = new Message<>(id, MType.SUBMIT, order);
-        return send(message);
+        return execute(Command.SUBMIT, message);
     }
 
-    public String query(String orderId) {
+    private String query(String orderId) {
         logger.debug("Query order with id: " + orderId);
         Message<String> message = new Message<>(id, MType.QUERY, orderId);
-        return send(message);
+        return execute(Command.QUERY, message);
     }
 
-    private <T> String send(Message<T> message) {
+    private <T> String execute(Command cmd, Message<T> message) {
         logger.debug("Sending message from client: " + id);
-        return Protocol.send(message);
+        return cmd.execute(message);
     }
 }

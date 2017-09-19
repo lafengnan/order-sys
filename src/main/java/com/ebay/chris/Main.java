@@ -22,12 +22,13 @@ public class Main {
         CmdLineParser parser = new CmdLineParser(bean);
         try {
             parser.parseArgument(args);
-            if (bean.mode.isEmpty() ||
-                    (!bean.mode.equals("server") &&
-                    !bean.mode.equals("client"))) {
+            if (bean.mode.isEmpty()
+                    || (!bean.mode.equals("server")
+                    && !bean.mode.equals("client"))) {
                 logger.debug("Nonsupport mode: " + bean.mode);
                 System.exit(-1);
             }
+
             if (bean.mode.equals("server")) {
                 Server server = new Server("demo");
                 server.init();
@@ -38,6 +39,7 @@ public class Main {
                 Client client = new Client();
                 client.run();
             }
+
         } catch (CmdLineException e) {
             logger.debug(e.getMessage());
         }
