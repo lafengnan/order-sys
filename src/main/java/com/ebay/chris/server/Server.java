@@ -21,6 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+@Deprecated
 public class Server {
     private static final Logger logger = Logger.getLogger(Server.class);
     private static final Jedis jedis = Util.jedis();
@@ -73,18 +74,6 @@ public class Server {
                         " has been accepted at: " + order.getAcceptedAt());
                 Util.sleep(5);
                 continue;
-            }
-
-            // step 0: set orderId and push back to stage queue
-            if (order.getId().isEmpty()) {
-                order.setId(IdGenerator.orderId());
-                order.setCurrentStep(Engine.Step.SUBMITTED);
-                order.setAcceptedAt(Instant.now().getEpochSecond());
-
-                Transaction t = jedis.multi();
-                t.lpush(Storage.schedulingQueue, JsonWriter.objectToJson(order));
-                t.lrem(Storage.stageQueue + ":in-progress", 1, orderInfo);
-                t.exec();
             }
         }
     }

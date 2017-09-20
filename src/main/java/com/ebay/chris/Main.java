@@ -1,7 +1,7 @@
 package com.ebay.chris;
 
-import com.ebay.chris.client.Client;
-import com.ebay.chris.server.Server;
+import com.ebay.chris.client.BlueClient;
+import com.ebay.chris.server.BlueServer;
 import org.apache.log4j.Logger;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -13,12 +13,12 @@ public class Main {
     @Option(name = "-m", aliases = "-mode", usage = "startup as server or client mode")
     private String mode = "";
 
-    public static void main(String... args) {
+    public static void main(String... args) throws Exception{
         Main main = new Main();
         parseArgs(main, args);
     }
 
-    private static void parseArgs(Main bean, String... args) {
+    private static void parseArgs(Main bean, String... args) throws Exception {
         CmdLineParser parser = new CmdLineParser(bean);
         try {
             parser.parseArgument(args);
@@ -30,14 +30,11 @@ public class Main {
             }
 
             if (bean.mode.equals("server")) {
-                Server server = new Server("demo");
-                server.init();
-                server.run();
+                BlueServer.start(8090);
             }
 
             if (bean.mode.equals("client")) {
-                Client client = new Client();
-                client.run();
+                new BlueClient("localhost", 8090).run();
             }
 
         } catch (CmdLineException e) {

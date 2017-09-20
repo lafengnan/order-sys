@@ -2,6 +2,7 @@ package com.ebay.chris.common;
 
 import org.apache.log4j.Logger;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Transaction;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -42,8 +43,17 @@ public class IdGenerator {
      * 3. counter in 6 digits, for instance 000001
      * In summary, one order id looks like:
      * 20170917999000001
+     * @param t redis transaction
      * @return orderId
      */
+    public static String orderId(Transaction t) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(today())
+                .append(merchantId)
+                .append(t.incr(orderIdKey));
+        return builder.toString();
+    }
+
     public static String orderId() {
         StringBuilder builder = new StringBuilder();
         builder.append(today())

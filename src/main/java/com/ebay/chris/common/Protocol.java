@@ -6,6 +6,7 @@ import com.ebay.chris.model.Order;
 import lombok.Data;
 import org.apache.log4j.Logger;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Transaction;
 
 import java.time.Instant;
 import java.util.LinkedList;
@@ -38,33 +39,29 @@ public class Protocol {
         message.sendAt = Instant.now().getEpochSecond();
         switch (message.type) {
             case SUBMIT:
-                final int timeOut = 60;
                 Order order = (Order)message.body;
-                jedis.lpush(Storage.stageQueue, JsonWriter.objectToJson(order));
-                String[] orderIds = {""};
 
-                // 2. query order id
-                for (int i = 0; orderIds[0].isEmpty() && i < timeOut; ) {
-                    List<String> infoList = jedis.lrange(Storage.schedulingQueue, 0, -1);
-                    infoList.forEach(s -> {
-                        Order updatedOrder = (Order)JsonReader.jsonToJava(s);
-                        if (updatedOrder.getQId().equals(order.getQId())) {
-                            orderIds[0] = updatedOrder.getId();
-                        }
-                    });
-                    if (orderIds[0].isEmpty()) {
-                        i += 5;
-                        Util.sleep(5);
-                    }
-                }
-                return orderIds[0];
+                order.setId(IdGenerator.orderId());
+                Transaction t = jedis.multi();
+                t.lpush(Storage.stageQueue, JsonWriter.objectToJson(order));
+                t.exec();
+
+                return order.getId();
             case QUERY:
                 String orderId = (String)message.body;
-                List<String> orderStrings = jedis.lrange(Storage.schedulingQueue, 0, -1);
-                List<Order> orders = new LinkedList<>();
-                orderStrings.forEach(s -> orders.add((Order)JsonReader.jsonToJava(s)));
-                Optional<Order> opt = orders.stream().filter(o -> o.getId().equals(orderId)).findFirst();
-                return opt.isPresent()?opt.get().toString():"null";
+                String info = "null";
+                for (String queue : Storage.queues) {
+                    List<String> orderStrings = jedis.lrange(queue, 0, -1);
+                    List<Order> orders = new LinkedList<>();
+                    orderStrings.forEach(s -> orders.add((Order)JsonReader.jsonToJava(s)));
+                    Optional<Order> opt = orders.stream().filter(o -> o.getId().equals(orderId)).findFirst();
+
+                    if (opt.isPresent()) {
+                        info = opt.get().toString();
+                        break;
+                    }
+                }
+                return info;
             case CHECK0:
                 return Health.GREEN.toString();
             case CHECK1:
