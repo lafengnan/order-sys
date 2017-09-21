@@ -1,22 +1,16 @@
 package com.ebay.chris.server;
 
 import com.cedarsoftware.util.io.JsonReader;
-import com.cedarsoftware.util.io.JsonWriter;
-import com.ebay.chris.Runner;
 import com.ebay.chris.common.IdGenerator;
 import com.ebay.chris.common.Storage;
 import com.ebay.chris.common.Util;
 import com.ebay.chris.model.Order;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.log4j.Logger;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Transaction;
 
-import java.time.Instant;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +31,7 @@ public class Server {
         this.engine = new Engine();
         this.info = new MetaData();
         this.info.setName(name);
-        this.info.setId(IdGenerator.serverId());
+        this.info.setId(""+IdGenerator.serverId());
     }
 
     public void init() {

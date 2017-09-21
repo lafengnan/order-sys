@@ -2,6 +2,7 @@ package com.ebay.chris;
 
 import com.ebay.chris.client.BlueClient;
 import com.ebay.chris.server.BlueServer;
+import com.ebay.chris.server.Proxy;
 import org.apache.log4j.Logger;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -34,9 +35,9 @@ public class Main {
             }
 
             if (bean.mode.equals("client")) {
-                new BlueClient("localhost", 8090).run();
+                BlueServer server = Proxy.pickUp();
+                new BlueClient("localhost", server.getPort()).run();
             }
-
         } catch (CmdLineException e) {
             logger.debug(e.getMessage());
         }
