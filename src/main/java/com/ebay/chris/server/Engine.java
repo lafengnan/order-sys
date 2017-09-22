@@ -66,13 +66,23 @@ public class Engine {
                 Util.sleep(gap);
                 boolean willRollback = false;
                 if (willRollback = isFailed()) {
-                    t.discard();
+                    rollback(data.values().iterator().next());
                 } else {
                     t.exec();
                     this.setEndAt(Instant.now().getEpochSecond());
                 }
                 logger.debug("Processing @Step: " + this);
                 return willRollback?FAILED:PRE_PROCESSING;
+            }
+
+            @Override
+            public void rollback(Order order) {
+                super.rollback(order);
+                jedis.lrem(Storage.preProcessingQueue, 1, JsonWriter.objectToJson(order));
+                order.setCurrentStep(FAILED);
+                order.getCurrentStep().setStartAt(0L);
+                order.getCurrentStep().setEndAt(0L);
+                jedis.lpush(Storage.schedulingQueue, JsonWriter.objectToJson(order));
             }
         },
 
@@ -91,7 +101,7 @@ public class Engine {
                 Util.sleep(gap);
                 boolean willRollback = false;
                 if (willRollback = isFailed()) {
-                    t.discard();
+                    rollback(data.values().iterator().next());
                 } else {
                     t.exec();
                     this.setEndAt(Instant.now().getEpochSecond());
@@ -99,6 +109,16 @@ public class Engine {
                 this.setEndAt(Instant.now().getEpochSecond());
                 logger.debug("Processing @Step: " + this);
                 return willRollback?FAILED:PROCESSING;
+            }
+
+            @Override
+            public void rollback(Order order) {
+                super.rollback(order);
+                jedis.lrem(Storage.processingQueue, 1, JsonWriter.objectToJson(order));
+                order.setCurrentStep(FAILED);
+                order.getCurrentStep().setStartAt(0L);
+                order.getCurrentStep().setEndAt(0L);
+                jedis.lpush(Storage.preProcessingQueue, JsonWriter.objectToJson(order));
             }
         },
 
@@ -117,17 +137,27 @@ public class Engine {
                 Util.sleep(gap);
                 boolean willRollback = false;
                 if (willRollback = isFailed()) {
-                    t.discard();
+                    rollback(data.values().iterator().next());
                 } else {
                     t.exec();
                     this.setEndAt(Instant.now().getEpochSecond());
                 }
                 this.setEndAt(Instant.now().getEpochSecond());
                 logger.debug("Processing @Step: " + this);
-                return willRollback?FAILED:POSTPROCESSING;
+                return willRollback?FAILED: POST_PROCESSING;
+            }
+
+            @Override
+            public void rollback(Order order) {
+                super.rollback(order);
+                jedis.lrem(Storage.postProcessingQueue, 1, JsonWriter.objectToJson(order));
+                order.setCurrentStep(FAILED);
+                order.getCurrentStep().setStartAt(0L);
+                order.getCurrentStep().setEndAt(0L);
+                jedis.lpush(Storage.processingQueue, JsonWriter.objectToJson(order));
             }
         },
-        POSTPROCESSING {
+        POST_PROCESSING {
             @Override
             public Step next() {
                 long begin = Instant.now().getEpochSecond();
@@ -142,7 +172,7 @@ public class Engine {
                 Util.sleep(gap);
                 boolean willRollback = false;
                 if (willRollback = isFailed()) {
-                    t.discard();
+                    rollback(data.values().iterator().next());
                 } else {
                     t.exec();
                     this.setEndAt(Instant.now().getEpochSecond());
@@ -152,12 +182,19 @@ public class Engine {
 
                 return willRollback?FAILED:COMPLETED;
             }
-        },
-        COMPLETED {
-        },
-        FAILED {
 
-        };
+            @Override
+            public void rollback(Order order) {
+                super.rollback(order);
+                jedis.lrem(Storage.completeQueue, 1, JsonWriter.objectToJson(order));
+                order.setCurrentStep(FAILED);
+                order.getCurrentStep().setStartAt(0L);
+                order.getCurrentStep().setEndAt(0L);
+                jedis.lpush(Storage.postProcessingQueue, JsonWriter.objectToJson(order));
+            }
+        },
+        COMPLETED {},
+        FAILED {};
 
         private long startAt = 0L;
         private long endAt = 0L;
@@ -165,6 +202,8 @@ public class Engine {
         public Step next() {
             return COMPLETED;
         }
+
+        public void rollback(Order order) {logger.debug("rollback order: " + order);}
 
         public long getStartAt() {
             return startAt;

@@ -28,8 +28,8 @@ public class IdGenerator {
         return UUID.randomUUID().toString();
     }
 
-    public static String serverId() {
-        return jedis.incr(serverIdKey).toString();
+    public static long serverId() {
+        return jedis.incr(serverIdKey);
     }
 
     public static String messageId() {

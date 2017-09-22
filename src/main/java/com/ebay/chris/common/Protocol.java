@@ -111,8 +111,8 @@ public class Protocol {
      */
     @Data
     public static class Message <T> {
-        // request id prefixed with 0
-        // response id prefixed with 1
+        // request id prefixed with #
+        // response id prefixed with *
         private String id;
         private MType type;
         private String sender;
