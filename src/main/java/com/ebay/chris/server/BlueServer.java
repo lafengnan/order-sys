@@ -13,6 +13,8 @@ import lombok.Setter;
 import org.apache.log4j.Logger;
 
 import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BlueServer {
     private static final Logger logger = Logger.getLogger(BlueServer.class);
@@ -40,6 +42,8 @@ public class BlueServer {
                     .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
 
             logger.debug("BlueServer is running" + ", port: " + this.port);
+            // registry server into cluster
+            Proxy.register(this);
 
             // bind port
             ChannelFuture f = b.bind(port).sync(); // (7)
@@ -52,22 +56,20 @@ public class BlueServer {
         }
     }
 
+    public static void runProcessor() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // waiting for server bootstrap
+                Util.sleep(5);
+                Engine engine = new Engine();
+                engine.process();
+            }
+        }).start();
+    }
+
     public static void start(int port) throws Exception {
         BlueServer server = new BlueServer(port);
         server.run();
-        Thread heartBeat = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Proxy.register(server);
-                // heartBeat every 1s
-                for (;;) {
-                    Util.sleep(1);
-                    Proxy.remove(server.getId());
-                    server.setTs(Instant.now().getEpochSecond());
-                    Proxy.register(server);
-                }
-            }
-        });
-        heartBeat.start();
     }
 }

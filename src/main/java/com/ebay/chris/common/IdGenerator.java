@@ -33,7 +33,7 @@ public class IdGenerator {
     }
 
     public static String messageId() {
-        return jedis.incr(msgIdKey).toString();
+       return jedis.incr(msgIdKey).toString();
     }
 
     /**

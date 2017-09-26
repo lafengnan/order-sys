@@ -19,6 +19,8 @@ public class Order {
     private int amount;
     // query id from client
     private String qId;
+    // processor id
+    private long prcId;
     // the timestamp of order created at client
     private long createdAt;
     // the timestamp of order submitted from client

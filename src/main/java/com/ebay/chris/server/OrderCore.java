@@ -37,14 +37,6 @@ public class OrderCore {
                 String userId = contents[1];
                 int amount = Integer.valueOf(contents[2]);
                 resp = submit(createOrder(userId, amount));
-                Thread processor = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Engine engine = new Engine();
-                        engine.process();
-                    }
-                });
-                processor.start();
                 break;
             case "check":
                 break;

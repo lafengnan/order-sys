@@ -17,7 +17,7 @@ public class Util {
         if (jedis == null) {
             synchronized (IdGenerator.class) {
                 if (jedis == null) {
-                    logger.debug("createOrder jedis connection...");
+                    logger.debug("build jedis connection...");
                     jedis = new Jedis(defaultHost, defaultPort);
                 }
             }

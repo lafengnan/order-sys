@@ -2,7 +2,6 @@ package com.ebay.chris.server;
 
 import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
-import com.ebay.chris.client.BlueClient;
 import com.ebay.chris.common.Util;
 import org.apache.log4j.Logger;
 import redis.clients.jedis.Jedis;
@@ -36,6 +35,7 @@ public class Proxy extends Thread{
 
     public static BlueServer pickUp() {
         Random random = new Random();
+        load();
         return servers.get(random.nextInt(jedis.llen(cluster).intValue()));
     }
 

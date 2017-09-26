@@ -1,6 +1,7 @@
 package com.ebay.chris;
 
 import com.ebay.chris.client.BlueClient;
+import com.ebay.chris.common.Util;
 import com.ebay.chris.server.BlueServer;
 import com.ebay.chris.server.Proxy;
 import org.apache.log4j.Logger;
@@ -8,6 +9,13 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+/**
+ * The routine entrance class. The routine consists of two roles:
+ * 1. Client
+ * 2. Server
+ * With option -m, the routine could run either as a server or a
+ * client. C
+ */
 public class Main {
     private static final Logger logger = Logger.getLogger(Main.class);
 
@@ -32,6 +40,7 @@ public class Main {
 
             if (bean.mode.equals("server")) {
                 BlueServer.start(8090);
+                BlueServer.runProcessor();
             }
 
             if (bean.mode.equals("client")) {

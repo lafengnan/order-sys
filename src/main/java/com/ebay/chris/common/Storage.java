@@ -10,9 +10,14 @@ public class Storage {
 
     public static String[] queues = {
             stageQueue,
+            stageQueue + ":processing",
             schedulingQueue,
+            schedulingQueue + ":processing",
             preProcessingQueue,
+            preProcessingQueue + ":processing",
             processingQueue,
+            processingQueue + ":processing",
             postProcessingQueue,
+            postProcessingQueue + ":processing",
             completeQueue};
 }

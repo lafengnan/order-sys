@@ -1,0 +1,39 @@
+@startuml
+Actor client
+participant server
+participant handler
+participant core
+participant protocol
+participant engine
+database mq
+
+client -> server: query order
+activate client
+activate server
+server -> handler: process request
+activate handler
+handler -> handler: parse command
+handler -> core: execute command
+activate core
+core -> protocol: execute protocol cmd
+activate protocol
+...
+protocol -> engine: processing pipeline
+activate engine
+activate mq
+loop 5 steps
+    engine -> engine:processing
+    engine -> mq: push/pull data
+    mq -> engine: return data/resp
+    engine -> engine: process complete/failed
+end
+engine -> protocol: return result
+protocol -> core: return result
+deactivate protocol
+core -> handler: return result
+deactivate core
+handler -> server: return result
+server -> client: return result
+
+
+@enduml
